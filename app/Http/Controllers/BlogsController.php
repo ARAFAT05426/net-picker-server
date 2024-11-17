@@ -2,129 +2,79 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Blog;  // Corrected to match your model name (singular)
+use App\Models\Blog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class BlogsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        $blogs = Blog::all();
-    
-        // Loop through the blogs and attach the full URL for the image
-        $blogs->each(function($blog) {
-            $blog->image_url = Storage::url($blog->image_path);  // Generate full URL for the image
+        $blogs = Blog::all()->map(function ($blog) {
+            $blog->image_url = Storage::url($blog->image_path);
+            return $blog;
         });
-    
+
         return response()->json($blogs);
     }
-    
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return;
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        // Validate request: make sure an image is required
         $request->validate([
             'title' => 'required|string|max:255',
+            'category' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',  // Make image required
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
-    
-        // Generate a custom filename for the image
-        $imageName = time() . '.' . $request->file('image')->getClientOriginalExtension();  // Use current time to create unique file name
-        
-        // Store the image with the custom name in the 'images' folder in the public disk
-        $imagePath = $request->file('image')->storeAs('images', $imageName, 'public');  // Store image with custom filename
-    
-        // Store the blog post in the database
+
+        $imagePath = $request->file('image')->store('images', 'public');
+
         $blog = Blog::create([
             'title' => $request->title,
+            'category' => $request->category,
             'content' => $request->content,
-            'image_path' => $imagePath,  // Store the image path
+            'image_path' => $imagePath,
         ]);
-    
-        // Generate the full URL for the image
-        $blog->image_url = Storage::url($imagePath);  // Correct image URL
-    
-        // Return the created blog
+
+        $blog->image_url = Storage::url($imagePath);
+
         return response()->json($blog, 201);
     }
-    
 
-    /**
-     * Display the specified resource.
-     */
     public function show(Blog $blog)
     {
-        return response()->json($blog);  // Return a single blog post
+        $blog->image_url = Storage::url($blog->image_path);
+        return response()->json($blog);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Blog $blog)
-    {
-        return view('blogs.edit', compact('blog'));  // You can render an edit form here
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Blog $blog)
+    
+    public function update(Request $request, $id)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'title' => 'nullable|string|max:255',
+            'category' => 'nullable|string|max:255',
+            'content' => 'nullable|string',
         ]);
-
-        // Handle image upload if there is one
-        if ($request->hasFile('image')) {
-            // Delete the old image if it exists
-            if ($blog->image_path) {
-                Storage::disk('public')->delete($blog->image_path);
-            }
-            // Store the new image
-            $blog->image_path = $request->file('image')->store('images', 'public');
-        }
-
-        // Update the blog
-        $blog->update([
-            'title' => $request->title,
-            'content' => $request->content,
-            'image_path' => $blog->image_path,
+    
+        $blog = Blog::findOrFail($id);
+    
+        // Update the blog data (without handling image)
+        $blog->update($request->only('title', 'category', 'content'));
+    
+        $blog->save();
+    
+        return response()->json([
+            'message' => 'Blog updated successfully',
+            'blog' => $blog,
         ]);
-
-        return response()->json($blog);  // Return the updated blog
     }
-
-    /**
-     * Remove the specified resource from storage.
-     */
+    
     public function destroy(Blog $blog)
     {
-        // Delete the image if it exists
         if ($blog->image_path) {
             Storage::disk('public')->delete($blog->image_path);
         }
-
-        // Delete the blog record
         $blog->delete();
 
-        return response()->json(null, 204);  // Return a no content response
+        return response()->json(['message' => 'Blog deleted successfully'], 204);
     }
 }
