@@ -11,8 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('visitors', function (Blueprint $table) {
             $table->id();
+            $table->string('ip_address')->index();  // Store the IP address
+            $table->string('country');  // Store the country
+            $table->date('visit_date');  // Explicitly store the visit date
             $table->timestamps();
         });
     }
@@ -22,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('visitors');
     }
 };

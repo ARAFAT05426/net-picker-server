@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\BlogsController;
-use App\Http\Controllers\ProductsController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\VisitorController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -19,10 +21,20 @@ Route::get('/', function () {
     return ['Laravel' => app()->version()];
 });
 
-Route::get('/products', [ProductsController::class, 'index']);
+Route::get('/products', [ProductController::class, 'index']);
+
+Route::get('/products/suggestions', [ProductController::class, 'searchSuggestions']);
+
+Route::get('/products/{id}', [ProductController::class, 'show']);
+
+Route::post('/contact', [ContactController::class, 'sendMail']);
+
+Route::post('/log-visitor', [VisitorController::class, 'logVisitor']);
+
+// Route to get visitor stats
+Route::get('/visitor-stats', [VisitorController::class, 'getVisitorStats']);
 
 // Blog routes (CRUD)
 Route::resource('blogs', BlogsController::class);
 
-require __DIR__.'/auth.php';
-
+require __DIR__ . '/auth.php';
