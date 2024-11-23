@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\BlogsController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\ImageUploadController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\VisitorController;
 use Illuminate\Support\Facades\Route;
@@ -36,5 +38,15 @@ Route::get('/visitor-stats', [VisitorController::class, 'getVisitorStats']);
 
 // Blog routes (CRUD)
 Route::resource('blogs', BlogsController::class);
+
+Route::get('/banners', [BannerController::class, 'index']);
+
+Route::post('/banners', [BannerController::class, 'store']);
+
+Route::put('/banners/{id}', [BannerController::class, 'update']);
+
+Route::delete('/banners/{id}', [BannerController::class, 'destroy']);
+
+Route::post('/upload-image', [ImageUploadController::class, 'store']);
 
 require __DIR__ . '/auth.php';

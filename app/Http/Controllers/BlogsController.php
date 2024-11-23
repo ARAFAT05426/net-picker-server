@@ -42,22 +42,19 @@ class BlogsController extends Controller
             'title' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'content' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image_path' => 'required|string', // This now comes from the frontend
         ]);
-
-        $imagePath = $request->file('image')->store('images', 'public');
 
         $blog = Blog::create([
             'title' => $request->title,
             'category' => $request->category,
             'content' => $request->content,
-            'image_path' => $imagePath,
+            'image_path' => $request->image_path,
         ]);
-
-        $blog->image_url = Storage::url($imagePath);
 
         return response()->json($blog, 201);
     }
+
 
     public function show(Blog $blog)
     {
@@ -71,20 +68,25 @@ class BlogsController extends Controller
             'title' => 'nullable|string|max:255',
             'category' => 'nullable|string|max:255',
             'content' => 'nullable|string',
+            'image_path' => 'nullable|string', // Optional field for new image path
         ]);
-
+    
         $blog = Blog::findOrFail($id);
-
-        // Update the blog data (without handling image)
-        $blog->update($request->only('title', 'category', 'content'));
-
-        $blog->save();
-
+    
+        // Update blog data
+        $blog->update([
+            'title' => $request->title ?? $blog->title,
+            'category' => $request->category ?? $blog->category,
+            'content' => $request->content ?? $blog->content,
+            'image_path' => $request->image_path ?? $blog->image_path, // Use existing image path if not updated
+        ]);
+    
         return response()->json([
             'message' => 'Blog updated successfully',
             'blog' => $blog,
         ]);
     }
+    
 
     public function destroy(Blog $blog)
     {
